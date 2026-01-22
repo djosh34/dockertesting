@@ -198,3 +198,7 @@ make test-integration  # run integration tests (requires Docker)
 ## Links
 
 - [testcontainers-go documentation](https://golang.testcontainers.org/)
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) file for details.
