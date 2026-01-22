@@ -5,9 +5,3 @@ help: ## Show this help
 
 test: ## Run unit tests
 	go test -v ./...
-
-test-integration: ## Run integration tests (requires Docker)
-	go test -v -tags=integration ./...
-
-test-all: ## Run all tests (unit + integration)
-	go test -v -tags=integration ./...
