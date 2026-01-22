@@ -1,3 +1,5 @@
+//go:build integration
+
 package dockertesting
 
 import (
@@ -8,6 +10,7 @@ import (
 )
 
 func TestExecTest_SimplePackage(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -59,6 +62,7 @@ func TestExecTest_SimplePackage(t *testing.T) {
 }
 
 func TestExecTest_WithArgs(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -110,6 +114,7 @@ func TestExecTest_WithArgs(t *testing.T) {
 }
 
 func TestExecTest_Timeout(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -154,6 +159,7 @@ func TestExecTest_Timeout(t *testing.T) {
 }
 
 func TestExecTest_NilContainer(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create a TestContainer with nil internal container
@@ -174,6 +180,7 @@ func TestExecTest_NilContainer(t *testing.T) {
 }
 
 func TestExecTest_DefaultValues(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network

@@ -3,6 +3,7 @@ package simple
 import "testing"
 
 func TestAdd(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		a, b, want int
 	}{
@@ -21,6 +22,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestSubtract(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		a, b, want int
 	}{
@@ -39,6 +41,7 @@ func TestSubtract(t *testing.T) {
 }
 
 func TestMultiply(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		a, b, want int
 	}{
@@ -57,6 +60,7 @@ func TestMultiply(t *testing.T) {
 
 // Test Divide but intentionally don't test the divide-by-zero case to achieve 70-99% coverage
 func TestDivide(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		a, b, want int
 	}{

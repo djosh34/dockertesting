@@ -2,6 +2,7 @@ package dockertesting
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,11 @@ import (
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+// dockerfileTemplate is the embedded Dockerfile template for building test containers.
+//
+//go:embed template.Dockerfile
+var dockerfileTemplate string
 
 // TestContainer wraps a testcontainers container for running Go tests.
 type TestContainer struct {
@@ -60,7 +66,7 @@ func CreateContainer(ctx context.Context, cfg CreateContainerConfig) (*TestConta
 
 	// Write Dockerfile to the package directory temporarily
 	dockerfilePath := filepath.Join(absPath, "Dockerfile")
-	if err := os.WriteFile(dockerfilePath, []byte(DockerfileTemplate), 0644); err != nil {
+	if err := os.WriteFile(dockerfilePath, []byte(dockerfileTemplate), 0644); err != nil {
 		return nil, fmt.Errorf("failed to write Dockerfile: %w", err)
 	}
 

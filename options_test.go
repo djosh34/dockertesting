@@ -6,6 +6,7 @@ import (
 )
 
 func TestNewOptions_RequiresPackagePath(t *testing.T) {
+	t.Parallel()
 	_, err := NewOptions("")
 	if err == nil {
 		t.Error("expected error for empty package path, got nil")
@@ -13,6 +14,7 @@ func TestNewOptions_RequiresPackagePath(t *testing.T) {
 }
 
 func TestNewOptions_DefaultValues(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -39,6 +41,7 @@ func TestNewOptions_DefaultValues(t *testing.T) {
 }
 
 func TestWithPattern(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithPattern("./pkg/..."))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -50,6 +53,7 @@ func TestWithPattern(t *testing.T) {
 }
 
 func TestWithArgs(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithArgs("-v", "-race"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -67,6 +71,7 @@ func TestWithArgs(t *testing.T) {
 }
 
 func TestWithArgs_Multiple(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithArgs("-v"), WithArgs("-race"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -84,6 +89,7 @@ func TestWithArgs_Multiple(t *testing.T) {
 }
 
 func TestWithAliases(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithAliases("myapp.test", "api.test"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -101,6 +107,7 @@ func TestWithAliases(t *testing.T) {
 }
 
 func TestWithAliases_Multiple(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithAliases("myapp.test"), WithAliases("api.test"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -112,6 +119,7 @@ func TestWithAliases_Multiple(t *testing.T) {
 }
 
 func TestWithVarSock(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithVarSock())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -123,6 +131,7 @@ func TestWithVarSock(t *testing.T) {
 }
 
 func TestWithSockPath(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithSockPath("/custom/docker.sock"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -134,6 +143,7 @@ func TestWithSockPath(t *testing.T) {
 }
 
 func TestWithMultipleOptions(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions(
 		"/path/to/package",
 		WithPattern("./cmd/..."),
@@ -167,6 +177,7 @@ func TestWithMultipleOptions(t *testing.T) {
 }
 
 func TestNewOptions_DefaultTimeout(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -178,6 +189,7 @@ func TestNewOptions_DefaultTimeout(t *testing.T) {
 }
 
 func TestWithTimeout(t *testing.T) {
+	t.Parallel()
 	customTimeout := 5 * time.Minute
 	opts, err := NewOptions("/path/to/package", WithTimeout(customTimeout))
 	if err != nil {
@@ -190,6 +202,7 @@ func TestWithTimeout(t *testing.T) {
 }
 
 func TestWithTimeout_ZeroDisablesTimeout(t *testing.T) {
+	t.Parallel()
 	opts, err := NewOptions("/path/to/package", WithTimeout(0))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -201,6 +214,7 @@ func TestWithTimeout_ZeroDisablesTimeout(t *testing.T) {
 }
 
 func TestWithTimeout_ShortDuration(t *testing.T) {
+	t.Parallel()
 	shortTimeout := 30 * time.Second
 	opts, err := NewOptions("/path/to/package", WithTimeout(shortTimeout))
 	if err != nil {

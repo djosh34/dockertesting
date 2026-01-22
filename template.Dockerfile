@@ -12,4 +12,4 @@ COPY . .
 RUN go mod download
 
 # Keep container alive for exec commands
-ENTRYPOINT ["sleep", "infinity"]
+ENTRYPOINT ["/bin/sh", "-c", "trap 'exit 0' TERM; while :; do sleep 0.1; done"]

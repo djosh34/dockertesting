@@ -15,6 +15,7 @@ import (
 
 // TestGetMessage tests the basic GetMessage function.
 func TestGetMessage(t *testing.T) {
+	t.Parallel()
 	msg := GetMessage()
 	if msg != "Hello from nested package" {
 		t.Errorf("unexpected message: %s", msg)
@@ -26,12 +27,13 @@ func TestGetMessage(t *testing.T) {
 // 1. Docker socket to be mounted (for testcontainers-go to work)
 // 2. TESTCONTAINERS_DOCKER_NETWORK env var to be set (to attach to the same network)
 func TestNestedContainer(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Get the network name from environment variable
 	networkName := os.Getenv(NetworkEnvVar)
 	if networkName == "" {
-		t.Skipf("Skipping test: %s environment variable not set. "+
+		t.Fatalf("Test precondition failed: %s environment variable not set. "+
 			"This test must be run inside dockertesting with WithVarSock() enabled.", NetworkEnvVar)
 	}
 
@@ -55,7 +57,7 @@ func TestNestedContainer(t *testing.T) {
 		t.Fatalf("Failed to create nginx container: %v", err)
 	}
 	defer func() {
-		if err := nginxContainer.Terminate(ctx); err != nil {
+		if err := nginxContainer.Terminate(ctx, testcontainers.StopTimeout(100*time.Millisecond)); err != nil {
 			t.Logf("Failed to terminate nginx container: %v", err)
 		}
 	}()

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+
+	"github.com/containerd/errdefs"
 )
 
 // DefaultCoverageFile is the default path where coverage output is written inside the container.
@@ -19,10 +21,12 @@ func (c *TestContainer) CopyFileFromContainer(ctx context.Context, containerFile
 
 	reader, err := c.ctr.CopyFileFromContainer(ctx, containerFilePath)
 	if err != nil {
-		// Check if the error indicates the file doesn't exist
-		// testcontainers-go returns an error when the file doesn't exist
-		// We treat this as a non-fatal condition and return nil bytes
-		return nil, nil
+		// If the file doesn't exist, return nil bytes (non-fatal condition).
+		// For all other errors, return the error to the caller.
+		if errdefs.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to copy file from container: %w", err)
 	}
 	defer func() {
 		_ = reader.Close()

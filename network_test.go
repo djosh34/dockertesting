@@ -1,3 +1,5 @@
+//go:build integration
+
 package dockertesting
 
 import (
@@ -6,6 +8,7 @@ import (
 )
 
 func TestCreateNetwork(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	net, cleanup, err := CreateNetwork(ctx)
@@ -27,6 +30,7 @@ func TestCreateNetwork(t *testing.T) {
 }
 
 func TestCreateNetwork_CleanupViaMethod(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	net, _, err := CreateNetwork(ctx)
@@ -46,6 +50,7 @@ func TestCreateNetwork_CleanupViaMethod(t *testing.T) {
 }
 
 func TestDockerNetwork_Remove_NilNetwork(t *testing.T) {
+	t.Parallel()
 	// Test that Remove handles nil network gracefully
 	dn := &DockerNetwork{
 		Name:    "test",

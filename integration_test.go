@@ -1,3 +1,5 @@
+//go:build integration
+
 package dockertesting
 
 import (
@@ -11,6 +13,7 @@ import (
 )
 
 func TestRun_SimplePackage(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -59,6 +62,7 @@ func TestRun_SimplePackage(t *testing.T) {
 }
 
 func TestRun_DNSAlias(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -101,6 +105,7 @@ func TestRun_DNSAlias(t *testing.T) {
 }
 
 func TestRun_NestedTestcontainers(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
@@ -152,6 +157,8 @@ func TestRun_NestedTestcontainers(t *testing.T) {
 
 // TestRun_NoGarbageFilesProduced verifies that running tests does not leave
 // any garbage files (coverage.txt, binaries, temp files) in the working directory.
+// NOTE: This test does NOT use t.Parallel() because it checks for filesystem
+// state before and after Run(), which would be affected by other parallel tests.
 func TestRun_NoGarbageFilesProduced(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()

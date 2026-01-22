@@ -1,3 +1,5 @@
+//go:build integration
+
 package dockertesting
 
 import (
@@ -8,6 +10,7 @@ import (
 )
 
 func TestCopyCoverage_AfterSuccessfulTest(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -70,6 +73,7 @@ func TestCopyCoverage_AfterSuccessfulTest(t *testing.T) {
 }
 
 func TestCopyCoverageFromPath_CustomPath(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -132,6 +136,7 @@ func TestCopyCoverageFromPath_CustomPath(t *testing.T) {
 }
 
 func TestCopyCoverageFromPath_EmptyPath(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -185,6 +190,7 @@ func TestCopyCoverageFromPath_EmptyPath(t *testing.T) {
 }
 
 func TestCopyFileFromContainer_NonExistentFile(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network
@@ -225,6 +231,7 @@ func TestCopyFileFromContainer_NonExistentFile(t *testing.T) {
 }
 
 func TestCopyFileFromContainer_NilContainer(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create a TestContainer with nil internal container
@@ -241,6 +248,7 @@ func TestCopyFileFromContainer_NilContainer(t *testing.T) {
 }
 
 func TestCopyCoverage_NilContainer(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create a TestContainer with nil internal container
@@ -257,6 +265,7 @@ func TestCopyCoverage_NilContainer(t *testing.T) {
 }
 
 func TestCopyCoverage_BeforeTestExecution(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 
 	// Create network

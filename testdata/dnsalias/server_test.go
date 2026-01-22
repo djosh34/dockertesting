@@ -17,6 +17,7 @@ import (
 // When running via `go test` directly (not in dockertest), this test will fail
 // because "myapp.test" will not resolve.
 func TestServerViaDNSAlias(t *testing.T) {
+	t.Parallel()
 	// Find an available port
 	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
@@ -83,6 +84,7 @@ func TestServerViaDNSAlias(t *testing.T) {
 // TestHelloHandler tests the handler in isolation (this test always passes).
 // This provides some coverage even when DNS alias is not available.
 func TestHelloHandler(t *testing.T) {
+	t.Parallel()
 	handler := HelloHandler()
 
 	// We're not testing the full HTTP flow here, just that the handler exists
@@ -93,6 +95,7 @@ func TestHelloHandler(t *testing.T) {
 
 // TestStartServer tests server creation (this test always passes).
 func TestStartServer(t *testing.T) {
+	t.Parallel()
 	server, err := StartServer(0)
 	if err != nil {
 		t.Fatalf("StartServer failed: %v", err)
@@ -104,6 +107,7 @@ func TestStartServer(t *testing.T) {
 
 // TestConstants verifies the constants are set correctly.
 func TestConstants(t *testing.T) {
+	t.Parallel()
 	if DNSAlias != "myapp.test" {
 		t.Errorf("DNSAlias = %q, want %q", DNSAlias, "myapp.test")
 	}

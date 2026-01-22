@@ -1,3 +1,5 @@
+//go:build integration
+
 package dockertesting
 
 import (
@@ -9,6 +11,7 @@ import (
 )
 
 func TestCreateContainer_Simple(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -79,6 +82,7 @@ func Add(a, b int) int {
 }
 
 func TestCreateContainer_WithAliases(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -142,12 +146,13 @@ func Add(a, b int) int {
 }
 
 func TestCreateContainer_WithVarSock(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	// Check if Docker socket exists before running this test
 	if _, err := os.Stat("/var/run/docker.sock"); os.IsNotExist(err) {
-		t.Skip("Docker socket not available, skipping test")
+		t.Fatal("Docker socket not available at /var/run/docker.sock - this integration test requires Docker")
 	}
 
 	// Create a temporary Go package for testing
@@ -219,6 +224,7 @@ func Add(a, b int) int {
 }
 
 func TestCreateContainer_EnvVarSet(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -284,6 +290,7 @@ func Add(a, b int) int {
 }
 
 func TestCreateContainer_InvalidPackagePath(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

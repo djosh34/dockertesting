@@ -7,6 +7,7 @@ import (
 )
 
 func TestTimeoutError_Error(t *testing.T) {
+	t.Parallel()
 	err := &TimeoutError{
 		Operation: "create container",
 		Err:       errors.New("context deadline exceeded"),
@@ -19,6 +20,7 @@ func TestTimeoutError_Error(t *testing.T) {
 }
 
 func TestTimeoutError_Unwrap(t *testing.T) {
+	t.Parallel()
 	innerErr := errors.New("context deadline exceeded")
 	err := &TimeoutError{
 		Operation: "create container",
@@ -31,6 +33,7 @@ func TestTimeoutError_Unwrap(t *testing.T) {
 }
 
 func TestWrapTimeoutError_NilError(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	result := wrapTimeoutError(ctx, nil, "some operation")
 	if result != nil {
@@ -39,6 +42,7 @@ func TestWrapTimeoutError_NilError(t *testing.T) {
 }
 
 func TestWrapTimeoutError_NonTimeoutError(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	innerErr := errors.New("some other error")
 	result := wrapTimeoutError(ctx, innerErr, "create network")
@@ -55,6 +59,7 @@ func TestWrapTimeoutError_NonTimeoutError(t *testing.T) {
 }
 
 func TestWrapTimeoutError_DeadlineExceeded(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), 0)
 	defer cancel()
 
