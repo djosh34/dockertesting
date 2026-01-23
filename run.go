@@ -97,12 +97,13 @@ func Run(ctx context.Context, packagePath string, opts ...Option) (*Result, erro
 
 	// Create container
 	container, err := CreateContainer(ctx, CreateContainerConfig{
-		PackagePath:   options.PackagePath,
-		Network:       network,
-		Aliases:       options.Aliases,
-		EnableVarSock: options.EnableVarSock,
-		SockPath:      options.SockPath,
-		NetworkName:   network.Name,
+		PackagePath:    options.PackagePath,
+		Network:        network,
+		Aliases:        options.Aliases,
+		EnableVarSock:  options.EnableVarSock,
+		SockPath:       options.SockPath,
+		NetworkName:    network.Name,
+		DockerfilePath: options.DockerfilePath,
 	})
 	if err != nil {
 		return nil, wrapTimeoutError(ctx, err, "create container")

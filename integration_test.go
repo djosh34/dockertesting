@@ -270,3 +270,103 @@ func filterNonTransientFiles(files []string) []string {
 	}
 	return nonTransient
 }
+
+func TestRun_CustomDockerfile(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	// Get absolute path to testdata/simple (which contains alternative.Dockerfile)
+	packagePath, err := filepath.Abs("testdata/simple")
+	if err != nil {
+		t.Fatalf("failed to get absolute path: %v", err)
+	}
+
+	// Run tests in Docker container with custom Dockerfile
+	result, err := Run(ctx, packagePath, WithDockerfilePath("alternative.Dockerfile"))
+	if err != nil {
+		t.Fatalf("Run() returned error: %v", err)
+	}
+
+	// Verify exit code is 0 (tests passed)
+	if result.ExitCode != 0 {
+		t.Errorf("expected exit code 0, got %d", result.ExitCode)
+		t.Logf("stdout:\n%s", string(result.Stdout))
+	}
+
+	// Verify coverage bytes are non-empty
+	if len(result.Coverage) == 0 {
+		t.Error("expected coverage to be non-empty")
+	} else {
+		// Verify coverage has valid content (starts with "mode:")
+		if !strings.HasPrefix(string(result.Coverage), "mode:") {
+			t.Errorf("coverage does not look valid, expected to start with 'mode:', got: %s", string(result.Coverage)[:min(50, len(result.Coverage))])
+		}
+		t.Logf("coverage file (%d bytes):\n%s", len(result.Coverage), string(result.Coverage))
+	}
+
+	// Verify stdout contains test output
+	stdout := string(result.Stdout)
+	if len(stdout) == 0 {
+		t.Error("expected stdout to be non-empty")
+	}
+
+	// Check for typical go test output indicators
+	if !strings.Contains(stdout, "PASS") && !strings.Contains(stdout, "ok") {
+		t.Errorf("stdout does not contain expected test output (PASS or ok), got:\n%s", stdout)
+	}
+
+	t.Logf("stdout:\n%s", stdout)
+}
+
+// TestRun_CustomDockerfile_VerifyMarker verifies that the custom Dockerfile was
+// actually used by checking for the marker file created by alternative.Dockerfile.
+func TestRun_CustomDockerfile_VerifyMarker(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	// Get absolute path to testdata/simple
+	packagePath, err := filepath.Abs("testdata/simple")
+	if err != nil {
+		t.Fatalf("failed to get absolute path: %v", err)
+	}
+
+	// Create network and container manually to verify the marker file
+	network, cleanupNetwork, err := CreateNetwork(ctx)
+	if err != nil {
+		t.Fatalf("failed to create network: %v", err)
+	}
+	defer func() {
+		if cleanupNetwork != nil {
+			_ = cleanupNetwork(ctx)
+		}
+	}()
+
+	// Create container with custom Dockerfile
+	container, err := CreateContainer(ctx, CreateContainerConfig{
+		PackagePath:    packagePath,
+		Network:        network,
+		NetworkName:    network.Name,
+		DockerfilePath: "alternative.Dockerfile",
+	})
+	if err != nil {
+		t.Fatalf("failed to create container: %v", err)
+	}
+	defer func() {
+		if container != nil {
+			_ = container.Terminate(ctx)
+		}
+	}()
+
+	// Check if the marker file exists (created by alternative.Dockerfile)
+	exitCode, _, err := container.Container().Exec(ctx, []string{"cat", "/tmp/dockerfile_marker.txt"})
+	if err != nil {
+		t.Fatalf("failed to exec in container: %v", err)
+	}
+	if exitCode != 0 {
+		t.Error("marker file not found - custom Dockerfile was not used")
+	} else {
+		t.Log("marker file found - custom Dockerfile was used successfully")
+	}
+}

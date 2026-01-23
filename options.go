@@ -36,6 +36,11 @@ type Options struct {
 
 	// Timeout is the maximum duration for the entire test execution (default: 10 minutes).
 	Timeout time.Duration
+
+	// DockerfilePath is the path to a custom Dockerfile to use for building the test container.
+	// If empty, the default embedded Dockerfile template is used.
+	// Supports both relative and absolute paths.
+	DockerfilePath string
 }
 
 // Option is a functional option for configuring Options.
@@ -129,6 +134,22 @@ func WithSockPath(path string) Option {
 func WithTimeout(timeout time.Duration) Option {
 	return func(o *Options) {
 		o.Timeout = timeout
+	}
+}
+
+// WithDockerfilePath sets the path to a custom Dockerfile to use for building
+// the test container. If not set, the default embedded Dockerfile template is used.
+// Supports both relative and absolute paths.
+//
+// The custom Dockerfile should be designed to run Go tests. It will be included
+// in the build context as "Dockerfile" regardless of its original filename.
+//
+// Example:
+//
+//	dockertesting.Run(ctx, path, dockertesting.WithDockerfilePath("./custom.Dockerfile"))
+func WithDockerfilePath(dockerfilePath string) Option {
+	return func(o *Options) {
+		o.DockerfilePath = dockerfilePath
 	}
 }
 

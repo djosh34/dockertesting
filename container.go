@@ -1,9 +1,13 @@
 package dockertesting
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -44,6 +48,9 @@ type CreateContainerConfig struct {
 
 	// NetworkName is the name of the Docker network (for env var).
 	NetworkName string
+
+	// DockerfilePath is the path to a custom Dockerfile (optional).
+	DockerfilePath string
 }
 
 // CreateContainer builds and creates a Docker container for running Go tests.
@@ -60,26 +67,20 @@ func CreateContainer(ctx context.Context, cfg CreateContainerConfig) (*TestConta
 		return nil, fmt.Errorf("failed to get absolute path for package: %w", err)
 	}
 
-	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+	if _, err = os.Stat(absPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("package path does not exist: %s", absPath)
 	}
 
-	// Write Dockerfile to the package directory temporarily
-	dockerfilePath := filepath.Join(absPath, "Dockerfile")
-	if err := os.WriteFile(dockerfilePath, []byte(dockerfileTemplate), 0644); err != nil {
-		return nil, fmt.Errorf("failed to write Dockerfile: %w", err)
+	contextArchive, err := CreateTarContext(absPath, cfg.DockerfilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tar context: %w", err)
 	}
-
-	// Ensure cleanup of temporary Dockerfile
-	defer func() {
-		_ = os.Remove(dockerfilePath)
-	}()
 
 	// Build container request
 	req := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
-			Context:    absPath,
-			Dockerfile: "Dockerfile",
+			ContextArchive: contextArchive,
+			Dockerfile:     "Dockerfile",
 		},
 		// Keep container alive for exec commands
 		WaitingFor: wait.ForExec([]string{"echo", "ready"}),
@@ -142,6 +143,124 @@ func CreateContainer(ctx context.Context, cfg CreateContainerConfig) (*TestConta
 	return &TestContainer{
 		ctr: ctr,
 	}, nil
+}
+
+// CreateTarContext creates a tar archive of the contextPath directory,
+// adding the Dockerfile from dockerfilePath.
+// If dockerfilePath is empty, it adds the embedded Dockerfile template instead.
+func CreateTarContext(contextPath string, dockerfilePath string) (io.ReadSeeker, error) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	// Get the Dockerfile content
+	var dockerfileContent []byte
+	if dockerfilePath == "" {
+		// Use the default embedded Dockerfile template
+		dockerfileContent = []byte(dockerfileTemplate)
+	} else {
+		// Read the custom Dockerfile
+		// Support both relative (relative to contextPath) and absolute paths
+		var fullPath string
+		if filepath.IsAbs(dockerfilePath) {
+			fullPath = dockerfilePath
+		} else {
+			fullPath = filepath.Join(contextPath, dockerfilePath)
+		}
+
+		content, err := os.ReadFile(fullPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read custom Dockerfile at %s: %w", fullPath, err)
+		}
+		dockerfileContent = content
+	}
+
+	// Walk the context directory and add all files to the tar
+	contextFS := os.DirFS(contextPath)
+	err := fs.WalkDir(contextFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip the root directory entry
+		if path == "." {
+			return nil
+		}
+
+		// Skip any file named "Dockerfile" - we'll add our own
+		if filepath.Base(path) == "Dockerfile" {
+			return nil
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return fmt.Errorf("failed to get file info for %s: %w", path, err)
+		}
+
+		// Create tar header
+		header, err := tar.FileInfoHeader(info, "")
+		if err != nil {
+			return fmt.Errorf("failed to create tar header for %s: %w", path, err)
+		}
+		header.Name = path
+
+		// Handle symlinks
+		if info.Mode()&fs.ModeSymlink != 0 {
+			linkTarget, err := os.Readlink(filepath.Join(contextPath, path))
+			if err != nil {
+				return fmt.Errorf("failed to read symlink %s: %w", path, err)
+			}
+			header.Linkname = linkTarget
+		}
+
+		// Write header
+		if err := tw.WriteHeader(header); err != nil {
+			return fmt.Errorf("failed to write tar header for %s: %w", path, err)
+		}
+
+		// For regular files, write the content
+		if info.Mode().IsRegular() {
+			fullPath := filepath.Join(contextPath, path)
+			file, err := os.Open(fullPath)
+			if err != nil {
+				return fmt.Errorf("failed to open file %s: %w", path, err)
+			}
+
+			_, copyErr := io.Copy(tw, file)
+			closeErr := file.Close()
+
+			if copyErr != nil {
+				return fmt.Errorf("failed to write file content for %s: %w", path, copyErr)
+			}
+			if closeErr != nil {
+				return fmt.Errorf("failed to close file %s: %w", path, closeErr)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk context directory: %w", err)
+	}
+
+	// Add the Dockerfile to the tar archive
+	dockerfileHeader := &tar.Header{
+		Name: "Dockerfile",
+		Mode: 0644,
+		Size: int64(len(dockerfileContent)),
+	}
+	if err := tw.WriteHeader(dockerfileHeader); err != nil {
+		return nil, fmt.Errorf("failed to write Dockerfile header: %w", err)
+	}
+	if _, err := tw.Write(dockerfileContent); err != nil {
+		return nil, fmt.Errorf("failed to write Dockerfile content: %w", err)
+	}
+
+	// Close the tar writer
+	if err := tw.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close tar writer: %w", err)
+	}
+
+	return bytes.NewReader(buf.Bytes()), nil
 }
 
 // Terminate stops and removes the container.
