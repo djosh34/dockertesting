@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -44,6 +45,9 @@ type CreateContainerConfig struct {
 
 	// NetworkName is the name of the Docker network (for env var).
 	NetworkName string
+
+	// DockerfilePath is the path to a custom Dockerfile (optional).
+	DockerfilePath string
 }
 
 // CreateContainer builds and creates a Docker container for running Go tests.
@@ -60,26 +64,17 @@ func CreateContainer(ctx context.Context, cfg CreateContainerConfig) (*TestConta
 		return nil, fmt.Errorf("failed to get absolute path for package: %w", err)
 	}
 
-	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+	if _, err = os.Stat(absPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("package path does not exist: %s", absPath)
 	}
 
-	// Write Dockerfile to the package directory temporarily
-	dockerfilePath := filepath.Join(absPath, "Dockerfile")
-	if err := os.WriteFile(dockerfilePath, []byte(dockerfileTemplate), 0644); err != nil {
-		return nil, fmt.Errorf("failed to write Dockerfile: %w", err)
-	}
-
-	// Ensure cleanup of temporary Dockerfile
-	defer func() {
-		_ = os.Remove(dockerfilePath)
-	}()
+	contextArchive, err := CreateTarContext(absPath, cfg.DockerfilePath)
 
 	// Build container request
 	req := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
-			Context:    absPath,
-			Dockerfile: "Dockerfile",
+			ContextArchive: contextArchive,
+			Dockerfile:     "Dockerfile",
 		},
 		// Keep container alive for exec commands
 		WaitingFor: wait.ForExec([]string{"echo", "ready"}),
@@ -142,6 +137,16 @@ func CreateContainer(ctx context.Context, cfg CreateContainerConfig) (*TestConta
 	return &TestContainer{
 		ctr: ctr,
 	}, nil
+}
+
+// CreateTarContext creates a tar archive of the contextPath directory,
+// adding the Dockerfile from dockerfilePath.
+// If dockerfilePath is empty, it adds the embedded Dockerfile template instead.
+func CreateTarContext(contextPath string, dockerfilePath string) (io.ReadSeeker, error) {
+	// TODO open fs.FS from contextPath.
+	// Then create tar from fs.FS, adding dockerfilePath
+	// if dockerfilePath is empty, add template as Dockerfile instead
+
 }
 
 // Terminate stops and removes the container.
